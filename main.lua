@@ -9,6 +9,7 @@ GAME_WIDTH, GAME_HEIGHT = 512, 288
 
 local offsetX, offsetY = 128, 16
 local selectedTile = { y = 1, x = 1 }
+local highlightedTile = nil
 
 function love.load()
     love.window.setTitle('match3')
@@ -54,6 +55,18 @@ function love.keypressed(key)
     selectedTile.x = ((selectedTile.x - 1) % 8) + 1
     selectedTile.y = ((selectedTile.y - 1) % 8) + 1
 
+    if key == 'enter' or key == 'return' then
+        if not highlightedTile then
+            -- need to copy
+            highlightedTile = { x = selectedTile.x, y = selectedTile.y }
+        else
+            local tmp = tiles[selectedTile.y][selectedTile.x].color
+            tiles[selectedTile.y][selectedTile.x].color = tiles[highlightedTile.y][highlightedTile.x].color
+            tiles[highlightedTile.y][highlightedTile.x].color = tmp
+            highlightedTile = nil
+        end
+    end
+
     if key == 'escape' then
         love.event.quit()
     end
@@ -87,12 +100,30 @@ local function drawSelected()
     )
 end
 
+local function drawHighlighted()
+    if highlightedTile then
+        love.graphics.setColor(1, 1, 1, 128/255)
+        local x, y = highlightedTile.x, highlightedTile.y
+        love.graphics.rectangle(
+            'fill',
+            tiles[y][x].x + offsetX,
+            tiles[y][x].y + offsetY,
+            32,
+            32,
+            4
+        )
+        love.graphics.setColor(1, 1, 1, 1)
+    end
+end
+
 function love.draw()
     push:start()
 
     drawTiles()
 
     drawSelected()
+
+    drawHighlighted()
 
     push:finish()
 end
