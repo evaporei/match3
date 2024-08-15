@@ -7,6 +7,9 @@ local sprites = require('sprites')
 
 GAME_WIDTH, GAME_HEIGHT = 512, 288
 
+local offsetX, offsetY = 128, 16
+local selectedTile = { y = 1, x = 1 }
+
 function love.load()
     love.window.setTitle('match3')
 
@@ -19,10 +22,14 @@ end
 
 local function generateTiles()
     local tiles = {}
-    for _ = 1, 8 do
+    for y = 1, 8 do
         local ts = {}
-        for _ = 1, 8 do
-            table.insert(ts, math.random(#sprites.tiles))
+        for x = 1, 8 do
+            table.insert(ts, {
+                y = (y - 1) * 32,
+                x = (x - 1) * 32,
+                color = math.random(#sprites.tiles),
+            })
         end
         table.insert(tiles, ts)
     end
@@ -32,30 +39,60 @@ end
 local tiles = generateTiles()
 
 function love.keypressed(key)
+    if key == 'right' then
+        selectedTile.x = selectedTile.x + 1
+    end
+    if key == 'left' then
+        selectedTile.x = selectedTile.x - 1
+    end
+    if key == 'up' then
+        selectedTile.y = selectedTile.y - 1
+    end
+    if key == 'down' then
+        selectedTile.y = selectedTile.y + 1
+    end
+    selectedTile.x = ((selectedTile.x - 1) % 8) + 1
+    selectedTile.y = ((selectedTile.y - 1) % 8) + 1
+
     if key == 'escape' then
         love.event.quit()
     end
 end
 
 local function drawTiles()
-    local offsetX, offsetY = 128, 16
-
     for y = 1, 8 do
         for x = 1, 8 do
+            local tile = tiles[y][x]
             love.graphics.draw(
                 images.tilesheet,
-                sprites.tiles[tiles[y][x]],
-                (x - 1) * 32 + offsetX,
-                (y - 1) * 32 + offsetY
+                sprites.tiles[tile.color],
+                tile.x + offsetX,
+                tile.y + offsetY
             )
         end
     end
+end
+
+local function drawSelected()
+    love.graphics.setColor(1, 0, 0, 234/255)
+    love.graphics.setLineWidth(4)
+    local x, y = selectedTile.x, selectedTile.y
+    love.graphics.rectangle(
+        'line',
+        tiles[y][x].x + offsetX,
+        tiles[y][x].y + offsetY,
+        32,
+        32,
+        4
+    )
 end
 
 function love.draw()
     push:start()
 
     drawTiles()
+
+    drawSelected()
 
     push:finish()
 end
