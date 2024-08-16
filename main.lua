@@ -7,10 +7,7 @@ local images = require('images')
 local sprites = require('sprites')
 
 GAME_WIDTH, GAME_HEIGHT = 512, 288
-
 local offsetX, offsetY = 128, 16
-local selectedTile = { y = 1, x = 1 }
-local highlightedTile = nil
 
 function love.load()
     love.window.setTitle('match3')
@@ -28,11 +25,9 @@ local function generateTiles()
         local ts = {}
         for x = 1, 8 do
             table.insert(ts, {
-                -- drawing
-                y = (y - 1) * 32,
                 x = (x - 1) * 32,
+                y = (y - 1) * 32,
                 color = math.random(#sprites.tiles),
-                -- fixed
                 gridX = x,
                 gridY = y,
             })
@@ -44,7 +39,11 @@ end
 
 local tiles = generateTiles()
 
+local selectedTile = tiles[1][1]
+local highlightedTile = nil
+
 function love.keypressed(key)
+    -- debug
     if key == 'p' then
         print('selectedTile { x = ' .. tostring(selectedTile.x) .. ', y = ' .. tostring(selectedTile.y) .. ' },')
         local s = '['
@@ -59,53 +58,49 @@ function love.keypressed(key)
         s = s .. ']'
         print(s)
     end
+
+    local x, y = selectedTile.gridX, selectedTile.gridY
+
     if key == 'right' then
-        selectedTile.x = selectedTile.x + 1
+        x = x + 1
     end
     if key == 'left' then
-        selectedTile.x = selectedTile.x - 1
+        x = x - 1
     end
     if key == 'up' then
-        selectedTile.y = selectedTile.y - 1
+        y = y - 1
     end
     if key == 'down' then
-        selectedTile.y = selectedTile.y + 1
+        y = y + 1
     end
     -- wrap around screen (for blazingly fast mechanics)
-    selectedTile.x = ((selectedTile.x - 1) % 8) + 1
-    selectedTile.y = ((selectedTile.y - 1) % 8) + 1
+    x = ((x - 1) % 8) + 1
+    y = ((y - 1) % 8) + 1
+
+    selectedTile = tiles[y][x]
 
     if key == 'enter' or key == 'return' then
         if not highlightedTile then
-            -- need to copy
-            highlightedTile = { x = selectedTile.x, y = selectedTile.y }
+            highlightedTile = { gridX = selectedTile.gridX, gridY = selectedTile.gridY }
         else
-            local tile1 = {}
-            local tile2 = {}
-            -- ewww maybe the teacher was right in storing the tiles directly
-            -- instead of their x and y...
-            for y = 1, 8 do
-                for x = 1, 8 do
-                    local tile = tiles[y][x]
-                    if tile.gridX == selectedTile.x and tile.gridY == selectedTile.y then
-                        tile1 = tile
-                    end
-                    if tile.gridX == highlightedTile.x and tile.gridY == highlightedTile.y then
-                        tile2 = tile
-                    end
-                end
-            end
-            local tmp1 = { x = tile1.x, y = tile1.y }
-            local tmp2 = { x = tile2.x, y = tile2.y }
+            local tile1 = selectedTile
+            local tile2 = tiles[highlightedTile.gridY][highlightedTile.gridX]
+
+            local target1 = { x = tile1.x, y = tile1.y }
+            local target2 = { x = tile2.x, y = tile2.y }
+
+            local tmp1 = tile1
+            tiles[tile1.gridY][tile1.gridX] = tile2
+            tiles[tile2.gridY][tile2.gridX] = tmp1
 
             Timer.tween(0.2, {
-                [tile1] = tmp2,
-                [tile2] = tmp1,
-            }):finish(function()
-                tile1.gridX, tile1.gridY, tile2.gridX, tile2.gridY = tile2.gridX, tile2.gridY, tile1.gridX, tile1.gridY
-            end)
+                [tile1] = target2,
+                [tile2] = target1,
+            })
 
-            selectedTile = highlightedTile
+            tile1.gridX, tile1.gridY, tile2.gridX, tile2.gridY = tile2.gridX, tile2.gridY, tile1.gridX, tile1.gridY
+
+            selectedTile = tile2
 
             highlightedTile = nil
         end
@@ -127,22 +122,14 @@ local function drawTiles()
                 tile.x + offsetX,
                 tile.y + offsetY
             )
-        end
-    end
-end
-
-local function drawModifiers()
-    for y = 1, 8 do
-        for x = 1, 8 do
-            local tile = tiles[y][x]
             -- red
-            if selectedTile.x == tile.gridX and selectedTile.y == tile.gridY then
+            if selectedTile.gridX == tile.gridX and selectedTile.gridY == tile.gridY then
                 love.graphics.setColor(1, 0, 0, 234/255)
                 love.graphics.setLineWidth(4)
                 love.graphics.rectangle(
                     'line',
-                    (selectedTile.x - 1) * 32 + offsetX,
-                    (selectedTile.y - 1) * 32 + offsetY,
+                    selectedTile.x + offsetX,
+                    selectedTile.y + offsetY,
                     32,
                     32,
                     4
@@ -150,12 +137,12 @@ local function drawModifiers()
                 love.graphics.setColor(1, 1, 1, 1)
             end
             -- white, transparent
-            if highlightedTile and highlightedTile.x == tile.gridX and highlightedTile.y == tile.gridY then
+            if highlightedTile and highlightedTile.gridX == tile.gridX and highlightedTile.gridY == tile.gridY then
                 love.graphics.setColor(1, 1, 1, 128/255)
                 love.graphics.rectangle(
                     'fill',
-                    (highlightedTile.x - 1) * 32 + offsetX,
-                    (highlightedTile.y - 1) * 32 + offsetY,
+                    tile.x + offsetX,
+                    tile.y + offsetY,
                     32,
                     32,
                     4
@@ -174,8 +161,6 @@ function love.draw()
     push:start()
 
     drawTiles()
-
-    drawModifiers()
 
     push:finish()
 end
