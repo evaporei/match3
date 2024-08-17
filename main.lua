@@ -28,6 +28,7 @@ local function generateTiles()
                 x = (x - 1) * 32,
                 y = (y - 1) * 32,
                 color = math.random(#sprites.tiles),
+                variant = math.random(#sprites.tiles[1]),
                 gridX = x,
                 gridY = y,
             })
@@ -51,7 +52,7 @@ function love.keypressed(key)
             s = s .. '\n['
             for x = 1, 8 do
                 local tile = tiles[y][x]
-                local tileStr = '{ x = ' .. tostring(tile.x) .. ', y = ' .. tostring(tile.y) .. ', gridX = ' .. tostring(tile.gridX) .. ', gridY = ' .. tostring(tile.gridY) .. ' },'
+                local tileStr = '{ x = ' .. tostring(tile.x) .. ', y = ' .. tostring(tile.y) .. ', gridX = ' .. tostring(tile.gridX) .. ', gridY = ' .. tostring(tile.gridY) .. ', color = ' .. tostring(tile.color) .. ' },'
                 s = s .. tileStr
             end
         end
@@ -118,7 +119,7 @@ local function drawTiles()
             -- tile itself
             love.graphics.draw(
                 images.tilesheet,
-                sprites.tiles[tile.color],
+                sprites.tiles[tile.color][tile.variant],
                 tile.x + offsetX,
                 tile.y + offsetY
             )
