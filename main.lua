@@ -40,13 +40,12 @@ end
 
 local tiles = generateTiles()
 
-local selectedTile = tiles[1][1]
+local selectedTile = { gridX = 1, gridY = 1 }
 local highlightedTile = nil
 
 function love.keypressed(key)
     -- debug
     if key == 'p' then
-        print('selectedTile { x = ' .. tostring(selectedTile.x) .. ', y = ' .. tostring(selectedTile.y) .. ' },')
         local s = '['
         for y = 1, 8 do
             s = s .. '\n['
@@ -60,31 +59,27 @@ function love.keypressed(key)
         print(s)
     end
 
-    local x, y = selectedTile.gridX, selectedTile.gridY
-
     if key == 'right' then
-        x = x + 1
+        selectedTile.gridX = selectedTile.gridX + 1
     end
     if key == 'left' then
-        x = x - 1
+        selectedTile.gridX = selectedTile.gridX - 1
     end
     if key == 'up' then
-        y = y - 1
+        selectedTile.gridY = selectedTile.gridY - 1
     end
     if key == 'down' then
-        y = y + 1
+        selectedTile.gridY = selectedTile.gridY + 1
     end
     -- wrap around screen (for blazingly fast mechanics)
-    x = ((x - 1) % 8) + 1
-    y = ((y - 1) % 8) + 1
-
-    selectedTile = tiles[y][x]
+    selectedTile.gridX = ((selectedTile.gridX - 1) % 8) + 1
+    selectedTile.gridY = ((selectedTile.gridY - 1) % 8) + 1
 
     if key == 'enter' or key == 'return' then
         if not highlightedTile then
             highlightedTile = { gridX = selectedTile.gridX, gridY = selectedTile.gridY }
         else
-            local tile1 = selectedTile
+            local tile1 = tiles[selectedTile.gridY][selectedTile.gridX]
             local tile2 = tiles[highlightedTile.gridY][highlightedTile.gridX]
 
             local target1 = { x = tile1.x, y = tile1.y }
@@ -101,7 +96,7 @@ function love.keypressed(key)
 
             tile1.gridX, tile1.gridY, tile2.gridX, tile2.gridY = tile2.gridX, tile2.gridY, tile1.gridX, tile1.gridY
 
-            selectedTile = tile2
+            selectedTile = { gridX = tile2.gridX, gridY = tile2.gridY }
 
             highlightedTile = nil
         end
@@ -129,8 +124,8 @@ local function drawTiles()
                 love.graphics.setLineWidth(4)
                 love.graphics.rectangle(
                     'line',
-                    selectedTile.x + offsetX,
-                    selectedTile.y + offsetY,
+                    tile.x + offsetX,
+                    tile.y + offsetY,
                     32,
                     32,
                     4
