@@ -6,31 +6,27 @@ local function tileQuads(sheet, tileWidth, tileHeight)
 
     local sprites = {}
 
+    -- each row is split into two halves of 6 variants for the same color
+    local loops = {
+        { start = 0, finish = sheetWidth / 2 - 1 },
+        { start = sheetWidth / 2, finish = sheetWidth - 1 },
+    }
+
     for y = 0, sheetHeight - 1 do
-        local color = {}
-        for x = 0, sheetWidth / 2 - 1 do
-            local sprite = love.graphics.newQuad(
-                x * tileWidth,
-                y * tileHeight,
-                tileWidth,
-                tileHeight,
-                sheet:getDimensions()
-            )
-            table.insert(color, sprite)
+        for _, loop in pairs(loops) do
+            local color = {}
+            for x = loop.start, loop.finish do
+                local sprite = love.graphics.newQuad(
+                    x * tileWidth,
+                    y * tileHeight,
+                    tileWidth,
+                    tileHeight,
+                    sheet:getDimensions()
+                )
+                table.insert(color, sprite)
+            end
+            table.insert(sprites, color)
         end
-        table.insert(sprites, color)
-        color = {}
-        for x = 6, sheetWidth - 1 do
-            local sprite = love.graphics.newQuad(
-                x * tileWidth,
-                y * tileHeight,
-                tileWidth,
-                tileHeight,
-                sheet:getDimensions()
-            )
-            table.insert(color, sprite)
-        end
-        table.insert(sprites, color)
     end
 
     return sprites
