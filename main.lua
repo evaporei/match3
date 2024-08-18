@@ -1,6 +1,7 @@
 love.graphics.setDefaultFilter('nearest', 'nearest')
 
 local push = require('libs.push')
+local inspect = require('libs.inspect')
 local Timer = require('knife.timer')
 
 local images = require('images')
@@ -43,6 +44,88 @@ local tiles = generateTiles()
 local selectedTile = { gridX = 1, gridY = 1 }
 local highlightedTile = nil
 
+local matches = {}
+
+local function calculateMatches()
+    matches = {}
+
+    local matchCount = 1
+
+    for y = 1, 8 do
+        local colorToMatch = tiles[y][1].color
+
+        matchCount = 1
+
+        for x = 2, 8 do
+            if tiles[y][x].color == colorToMatch then
+                matchCount = matchCount + 1
+            else
+                colorToMatch = tiles[y][x].color
+
+                if matchCount >= 3 then
+                    local match = {}
+
+                    for x2 = x - 1, x - matchCount, -1 do
+                        table.insert(match, tiles[y][x2])
+                    end
+
+                    table.insert(matches, match)
+                end
+
+                matchCount = 1
+            end
+        end
+
+        if matchCount >= 3 then
+            local match = {}
+
+            for x2 = 8, 8 - matchCount + 1, -1 do
+                table.insert(match, tiles[y][x2])
+            end
+
+            table.insert(matches, match)
+        end
+    end
+
+    for x = 1, 8 do
+        local colorToMatch = tiles[1][x].color
+
+        matchCount = 1
+
+        for y = 2, 8 do
+            if tiles[y][x].color == colorToMatch then
+                matchCount = matchCount + 1
+            else
+                colorToMatch = tiles[y][x].color
+
+                if matchCount >= 3 then
+                    local match = {}
+
+                    for y2 = y - 1, y - matchCount, -1 do
+                        table.insert(match, tiles[y2][x])
+                    end
+
+                    table.insert(matches, match)
+                end
+
+                matchCount = 1
+            end
+        end
+
+        if matchCount >= 3 then
+            local match = {}
+
+            for y2 = 8, 8 - matchCount + 1, -1 do
+                table.insert(match, tiles[y2][x])
+            end
+
+            table.insert(matches, match)
+        end
+    end
+
+    return #matches
+end
+
 function love.keypressed(key)
     -- debug
     if key == 'p' then
@@ -57,6 +140,10 @@ function love.keypressed(key)
         end
         s = s .. ']'
         print(s)
+    end
+    if key == 'm' then
+        print(calculateMatches())
+        print(inspect(matches))
     end
 
     if key == 'right' then
